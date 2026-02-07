@@ -45,7 +45,12 @@ export class AppService {
     }
     // Web Origin (includes iOS native apps and unknown user agents)
     else {
-      origin = this.configService.get<string>('origin');
+      const originConfig = this.configService.get<string>('origin');
+      // Split comma-separated origins into array
+      origin = originConfig.includes(',') 
+        ? originConfig.split(',').map(o => o.trim()) 
+        : originConfig;
+      
       if (os.name?.includes('iOS')) {
         this.logger.log(`🍎 iOS detected, using web origin: ${origin}`);
       } else if (!os.name) {
