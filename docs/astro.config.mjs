@@ -14,7 +14,7 @@ export default defineConfig({
     plugins: [basicSsl()],
     server: {
       https: true,
-    },
+    }
   },
   site: 'https://liquidauth.com',
   trailingSlash: 'never',

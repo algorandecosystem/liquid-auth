@@ -22,6 +22,7 @@ COPY --from=BUILDER /home/node/node_modules ./node_modules
 COPY --from=BUILDER /home/node/dist ./dist
 COPY --from=BUILDER /home/node/src ./src
 COPY --from=BUILDER /home/node/package.json ./package.json
+COPY --from=BUILDER /home/node/assetlinks.json ./assetlinks.json
 
 # Expose the port on which the app will run
 EXPOSE 3000
