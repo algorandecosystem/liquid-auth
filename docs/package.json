@@ -25,7 +25,7 @@
     "@types/react-dom": "^18.3.0",
     "algosdk": "^2.9.0",
     "astro": "^4.3.5",
-    "cbor-x": "^1.6.0",
+    "cbor": "^10.0.11",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "rehype-mermaid": "^2.1.0",
@@ -38,10 +38,14 @@
     "typescript": "^5.4.5"
   },
   "devDependencies": {
+    "@rollup/plugin-inject": "^5.0.5",
     "@tanstack/react-query-devtools": "^5.54.1",
     "@vitejs/plugin-basic-ssl": "^1.1.0",
+    "process": "^0.11.10",
     "socket.io-client": "^4.7.5",
+    "stream-browserify": "^3.0.0",
     "tweetnacl": "^1.0.3",
-    "uuid": "^10.0.0"
+    "uuid": "^10.0.0",
+    "vite-plugin-node-polyfills": "^0.25.0"
   }
 }

@@ -5,15 +5,37 @@ import tailwind from '@astrojs/tailwind';
 import starlightOpenAPI, { openAPISidebarGroups } from 'starlight-openapi';
 // import starlightTypeDoc, { typeDocSidebarGroup } from "starlight-typedoc";
 import react from '@astrojs/react';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 import mdx from '@astrojs/mdx';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 // https://astro.build/config
 export default defineConfig({
   vite: {
-    plugins: [basicSsl()],
+    plugins: [
+      basicSsl(),
+      nodePolyfills({
+        include: ['stream', 'buffer', 'process'],
+        globals: {
+          Buffer: true,
+          global: true,
+          process: true,
+        },
+      }),
+    ],
     server: {
       https: true,
+    },
+    define: {
+      global: 'globalThis',
+    },
+    optimizeDeps: {
+      esbuildOptions: {
+        define: {
+          global: 'globalThis'
+        }
+      },
+      include: ['algosdk', 'cbor']
     }
   },
   site: 'https://liquidauth.com',

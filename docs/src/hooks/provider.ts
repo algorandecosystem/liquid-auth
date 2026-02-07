@@ -1,4 +1,4 @@
-import {decode} from 'cbor-x'
+import cbor from 'cbor'
 import { decodeUnsignedTransaction } from "algosdk";
 import { type IARC0001Transaction, ResponseMessage, type Results, fromBase64Url } from "@algorandfoundation/provider";
 
@@ -15,7 +15,8 @@ export function attachSignedTransactionsFromResult(address: string, result: Resu
   return stxns
 }
 
-export function fromResult(result: string): ResponseMessage {
-  return decode(fromBase64Url(result)) as ResponseMessage
+export function fromResult(result: string | Uint8Array): ResponseMessage {
+  const bytes = typeof result === 'string' ? fromBase64Url(result) : result;
+  return cbor.decodeFirstSync(bytes) as ResponseMessage
 }
 
