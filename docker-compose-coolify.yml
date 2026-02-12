@@ -1,0 +1,45 @@
+services:
+  liquid-auth:
+    build: .
+    env_file:
+      - .env.docker
+    expose:
+      - "3000"
+    depends_on:
+      - redis
+      - mongo
+      - falconsrv
+    environment:
+      - FALCON_SERVICE_URL="falconsrv:3002"
+      - DB_HOST=mongo:27017
+      - DB_USERNAME=${DB_USERNAME:-algorand}
+      - DB_PASSWORD=${DB_PASSWORD:-algorand}
+      - DB_NAME=${DB_USERNAME:-algorand}
+      - DB_ATLAS=false
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_USERNAME=default
+      - REDIS_PASSWORD=
+      - ANDROID_SHA256HASH=${ANDROID_SHA256HASH}
+      - ANDROID_PACKAGENAME=${ANDROID_PACKAGENAME:-com.michaeltchuang.walletsdk.demo}
+  falconsrv:
+    build:
+      context: ./falconserver
+    expose:
+      - "3002"
+  redis:
+    image: redis
+    expose:
+      - "6379"
+  mongo:
+    image: mongo:7.0
+    expose:
+      - "27017"
+    environment:
+      - MONGO_INITDB_DATABASE=${DB_NAME:-fido}
+      - MONGO_INITDB_ROOT_USERNAME=${DB_USERNAME:-algorand}
+      - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD:-algorand}
+    volumes:
+      - mongo:/data/db
+volumes:
+  mongo:
