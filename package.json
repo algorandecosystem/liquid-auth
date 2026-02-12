@@ -30,7 +30,6 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "preinstall": "node bin/bootstrap.js && node bin/update-well-known.js",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org phearzero --project node-express dist && sentry-cli sourcemaps upload --org phearzero --project node-express dist"
   },
   "dependencies": {
