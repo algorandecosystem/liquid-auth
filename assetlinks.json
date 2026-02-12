@@ -36,5 +36,15 @@
         "06:20:1E:74:B6:20:C9:74:89:1E:E5:01:8E:1E:5D:3B:C5:4B:EA:8A:B0:EC:72:65:0B:CD:0A:67:F7:4A:72:FF"
       ]
     }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "web",
+      "site": "https://liquid-auth-api.pg.nodely.dev,https://michaeltchuang-usewallet.ngrok.dev"
+    }
   }
 ]
