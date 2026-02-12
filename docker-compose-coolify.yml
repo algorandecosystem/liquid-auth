@@ -10,7 +10,7 @@ services:
       - mongo
       - falconsrv
     environment:
-      - FALCON_SERVICE_URL=falconsrv:3002
+      - FALCON_SERVICE_URL=http://falconsrv:3002
       - DB_HOST=mongo:27017
       - DB_USERNAME=${DB_USERNAME:-algorand}
       - DB_PASSWORD=${DB_PASSWORD:-algorand}
