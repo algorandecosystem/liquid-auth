@@ -6,12 +6,25 @@ import starlightOpenAPI, { openAPISidebarGroups } from 'starlight-openapi';
 // import starlightTypeDoc, { typeDocSidebarGroup } from "starlight-typedoc";
 import react from '@astrojs/react';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import mdx from '@astrojs/mdx';
 import basicSsl from '@vitejs/plugin-basic-ssl';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const liquidClientSrc = resolve(__dirname, 'node_modules/@algorandfoundation/liquid-client/src');
+
 // https://astro.build/config
 export default defineConfig({
   vite: {
+    resolve: {
+      alias: {
+        '@algorandfoundation/liquid-client/signal': `${liquidClientSrc}/signal.ts`,
+        '@algorandfoundation/liquid-client/encoding': `${liquidClientSrc}/encoding.ts`,
+        '@algorandfoundation/liquid-client': `${liquidClientSrc}/index.ts`,
+      },
+    },
     plugins: [
       basicSsl(),
       nodePolyfills({
