@@ -44,7 +44,7 @@
     ],
     "target": {
       "namespace": "web",
-      "site": "https://liquid-auth-api.pg.nodely.dev,https://michaeltchuang-usewallet.ngrok.dev"
+      "site": "https://liquid-auth-api.pg.nodely.dev,https://michaeltchuang-usewallet.ngrok.dev,https://lora-usewallet.pg.nodely.dev,https://lora.pg.nodely.dev"
     }
   }
 ]
