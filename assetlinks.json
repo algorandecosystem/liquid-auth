@@ -44,7 +44,37 @@
     ],
     "target": {
       "namespace": "web",
-      "site": "https://liquid-auth-api.pg.nodely.dev,https://michaeltchuang-usewallet.ngrok.dev"
+      "site": "https://liquid-auth-api.pg.nodely.dev"
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "web",
+      "site": "https://michaeltchuang-usewallet.ngrok.dev"
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "web",
+      "site": "https://lora-usewallet.pg.nodely.dev"
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls",
+      "delegate_permission/common.get_login_creds"
+    ],
+    "target": {
+      "namespace": "web",
+      "site": "https://lora.pg.nodely.dev"
     }
   }
 ]
