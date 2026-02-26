@@ -7,7 +7,8 @@
     "start": "astro dev",
     "build": "NODE_OPTIONS=--max-old-space-size=16384 astro check && NODE_OPTIONS=--max-old-space-size=16384 astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "postinstall": "node scripts/patch-sitemap.mjs"
   },
   "dependencies": {
     "@algorandfoundation/liquid-client": "github:algonode/liquid-auth-js",
@@ -36,6 +37,9 @@
     "typedoc": "^0.28.0",
     "typedoc-plugin-markdown": "^4.10.0",
     "typescript": "^5.4.5"
+  },
+  "overrides": {
+    "@astrojs/sitemap": "3.3.1"
   },
   "devDependencies": {
     "@rollup/plugin-inject": "^5.0.5",
