@@ -1,0 +1,43 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+import Default from '@astrojs/starlight/components/Head.astro';
+---
+
+<Default {...Astro.props} />
+
+<script>
+  import { initMermaid } from '../lib/mermaid-loader';
+
+  function renderMermaid() {
+    // Starlight uses Expressive Code: blocks are <pre data-language="mermaid">
+    // with content wrapped in <div class="ec-line"> elements
+    const preTags = document.querySelectorAll<HTMLPreElement>('pre[data-language="mermaid"]');
+    const nodes: HTMLElement[] = [];
+
+    preTags.forEach((pre) => {
+      // Reconstruct the mermaid source line-by-line from Expressive Code's DOM structure
+      const lines = pre.querySelectorAll('.ec-line');
+      const mermaidText = Array.from(lines)
+        .map((line) => line.textContent ?? '')
+        .join('\n');
+      if (!mermaidText.trim()) return;
+
+      // Replace the entire expressive-code wrapper with a plain <pre class="mermaid">
+      const container = pre.closest('.expressive-code') ?? pre;
+      const div = document.createElement('pre');
+      div.className = 'mermaid';
+      div.textContent = mermaidText;
+      container.replaceWith(div);
+      nodes.push(div);
+    });
+
+    if (nodes.length > 0) {
+      initMermaid(nodes);
+    }
+  }
+
+  // Module scripts are always deferred — DOM is ready when this runs.
+  // Also listen for astro:page-load to handle View Transitions navigations.
+  renderMermaid();
+  document.addEventListener('astro:page-load', renderMermaid);
+</script>

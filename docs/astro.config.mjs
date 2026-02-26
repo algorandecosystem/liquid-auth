@@ -1,6 +1,5 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
-import rehypeMermaid from 'rehype-mermaid';
 import tailwind from '@astrojs/tailwind';
 import starlightOpenAPI, { openAPISidebarGroups } from 'starlight-openapi';
 // import starlightTypeDoc, { typeDocSidebarGroup } from "starlight-typedoc";
@@ -53,9 +52,6 @@ export default defineConfig({
   },
   site: 'https://liquidauth.com',
   trailingSlash: 'never',
-  markdown: {
-    rehypePlugins: [rehypeMermaid],
-  },
   integrations: [
     starlight({
       title: 'Liquid Auth',
@@ -105,6 +101,7 @@ export default defineConfig({
         ]),
       ],
       components: {
+        Head: './src/components/Head.astro',
         PageFrame: './src/components/PageFrame.astro',
         ThemeProvider: './src/components/CustomThemeProvider.astro',
         ThemeSelect: './src/components/ThemeSelect.astro',
