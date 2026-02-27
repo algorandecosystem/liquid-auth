@@ -27,9 +27,22 @@ export async function reloadSession(session: SessionType) {
   });
 }
 
+import assetLinks from '../../assetlinks.json' with { type: 'json' };
+
+/**
+ * Extract trusted web origins from assetlinks.json for CORS
+ */
+function getOriginsFromAssetLinks(): string[] {
+  const webOrigins = assetLinks
+    .filter((entry: any) => entry.target?.namespace === 'web' && entry.target?.site)
+    .map((entry: any) => entry.target.site);
+  return [...new Set(webOrigins)];
+}
+
 @WebSocketGateway({
   cors: {
-    origin: '*',
+    origin: getOriginsFromAssetLinks(),
+    credentials: true,
   },
 })
 export class SignalsGateway

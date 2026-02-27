@@ -103,7 +103,8 @@ async function bootstrap() {
       
       // Check if origin is in allowed list
       if (origins.includes(origin)) {
-        callback(null, true);
+        // Return the specific origin (required when credentials: true)
+        callback(null, origin);
       } else {
         callback(new Error(`Not allowed by CORS: ${origin}`));
       }
