@@ -17,6 +17,20 @@ import { nodeProfilingIntegration } from '@sentry/profiling-node';
 import { SentryFilter } from './sentry.filter.js';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
+// Asset Links for CORS origins
+// @ts-ignore, required for jest
+import assetLinks from '../assetlinks.json' with { type: 'json' };
+
+/**
+ * Extract trusted web origins from assetlinks.json for CORS
+ */
+function getOriginsFromAssetLinks(): string[] {
+  const webOrigins = assetLinks
+    .filter((entry: any) => entry.target?.namespace === 'web' && entry.target?.site)
+    .map((entry: any) => entry.target.site);
+  return [...new Set(webOrigins)]; // dedupe
+}
+
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: ['error', 'warn', 'debug', 'log', 'verbose'],
@@ -72,13 +86,16 @@ async function bootstrap() {
   });
   app.use(sessionHandler);
 
-  // Get allowed origins from config, or default to common development origins
-  const allowedOrigins = config.get('origin') || process.env.ORIGIN || 'http://localhost,http://localhost:3000';
-  const origins = Array.isArray(allowedOrigins) 
-    ? allowedOrigins 
-    : allowedOrigins.split(',').map((o) => o.trim());
-  
-  // Enable CORS for development
+  // Get origins from assetlinks.json (trusted web origins)
+  const origins = getOriginsFromAssetLinks();
+
+  if (origins.length === 0) {
+    origins.push('http://localhost', 'http://localhost:3000');
+  }
+
+  console.log('CORS allowed origins:', origins);
+
+  // Enable CORS
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
