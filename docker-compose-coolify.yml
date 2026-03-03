@@ -27,7 +27,9 @@ services:
       # CORS middleware labels
       - traefik.http.middlewares.lqacors.headers.accesscontrolalloworiginlist=*
       - traefik.http.middlewares.lqacors.headers.accesscontrolallowmethods=GET,POST,PUT,DELETE,OPTIONS
-      - traefik.http.middlewares.lqacors.headers.accesscontrolallowheaders=Content-Type,Authorization
+      - traefik.http.middlewares.lqacors.headers.accesscontrolallowheaders=Authorization,Content-Type,Accept,Origin
+      - traefik.http.middlewares.cors.headers.accesscontrolalloworiginlistregex=.*
+      - traefik.http.middlewares.cors.headers.accesscontrolallowcredentials=true
       - traefik.http.middlewares.lqacors.headers.accesscontrolmaxage=100
       - traefik.http.middlewares.lqacors.headers.addvaryheader=true
   falconsrv:
