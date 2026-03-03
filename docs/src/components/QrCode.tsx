@@ -149,24 +149,33 @@ export function QrCode({ label = true }: { label?: boolean }) {
         let data = fromResult(event.data) as ResponseMessage;
         setStatus(RECEIVED_SIGNATURE);
         
-        const signedBytes = fromBase64Url(data.result.stxns[0]);
+        // Process all returned signed transactions
+        // For Falcon accounts, wallet returns multiple txns (main + dummy txns)
+        const signedStxns: Uint8Array[] = [];
         
-        // Check if it's a raw Ed25519 signature (64 bytes) or full signed transaction (Falcon, etc.)
-        let stxns: Uint8Array;
-        if (signedBytes.length === 64) {
-          // Ed25519 signature - attach it to the transaction
-          const attached = _txn.attachSignature(_auth ? _auth : _wallet, signedBytes);
-          if (!attached) {
-            setStatus(ERROR);
-            return;
+        for (let i = 0; i < data.result.stxns.length; i++) {
+          const signedBytes = fromBase64Url(data.result.stxns[i]);
+
+          // For the first transaction, check if it's a raw Ed25519 signature (64 bytes)
+          // or a full signed transaction (Falcon, etc.)
+          if (i === 0 && signedBytes.length === 64) {
+            // Ed25519 signature - attach it to the original transaction
+            const attached = _txn.attachSignature(_auth ? _auth : _wallet, signedBytes);
+            if (!attached) {
+              setStatus(ERROR);
+              return;
+            }
+            signedStxns.push(attached);
+          } else {
+            // Full signed transaction (Falcon signatures or additional dummy txns)
+            signedStxns.push(signedBytes);
           }
-          stxns = attached;
-        } else {
-          // Full signed transaction (Falcon or other post-quantum signatures)
-          stxns = signedBytes;
         }
         
-        algod.sendRawTransaction(stxns).do().then(({txId})=>{
+        // Send all signed transactions as a group
+        // For single Ed25519: just [stxn]
+        // For Falcon: [mainStxn, dummy1, dummy2, dummy3]
+        algod.sendRawTransaction(signedStxns).do().then(({txId})=>{
           setConfirmedTxId(txId);
           setStatus(SUBMITTED_TRANSACTION);
           waitForConfirmation(algod, txId, 4).then(()=>{

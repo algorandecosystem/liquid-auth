@@ -16,16 +16,6 @@ import { map } from 'rxjs/operators';
 import { RedisIoAdapter } from '../adapters/redis-io.adapter.js';
 import { AuthService } from '../auth/auth.service.js';
 import { Session } from '../auth/session.schema.js';
-export async function reloadSession(session: SessionType) {
-  return new Promise((resolve, reject) => {
-    session.reload((err) => {
-      if (err) {
-        reject(err);
-      }
-      resolve(session);
-    });
-  });
-}
 
 import assetLinks from '../../assetlinks.json' with { type: 'json' };
 
@@ -37,6 +27,17 @@ function getOriginsFromAssetLinks(): string[] {
     .filter((entry: any) => entry.target?.namespace === 'web' && entry.target?.site)
     .map((entry: any) => entry.target.site);
   return [...new Set(webOrigins)];
+}
+
+export async function reloadSession(session: SessionType) {
+  return new Promise((resolve, reject) => {
+    session.reload((err) => {
+      if (err) {
+        reject(err);
+      }
+      resolve(session);
+    });
+  });
 }
 
 @WebSocketGateway({
