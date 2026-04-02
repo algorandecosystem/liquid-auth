@@ -11,6 +11,7 @@ import {
 import { AppService } from '../app.service.js';
 import { ConfigService } from '@nestjs/config';
 import { fromBase64Url } from '../encoding/index.js';
+import nacl from 'tweetnacl';
 
 @Injectable()
 export class AssertionService {
@@ -99,9 +100,10 @@ export class AssertionService {
     let { verified } = verification;
     const { authenticationInfo } = verification;
 
-    // Check for Liquid Extension with Falcon signature
+    // Check for Liquid Extension with supported signature types
+    const liquidType = credential.clientExtensionResults?.liquid?.type;
     const hasLiquidExtension =
-      credential.clientExtensionResults?.liquid?.type === 'falcon-1024' &&
+      (liquidType === 'falcon-1024' || liquidType === 'solana') &&
       credential.clientExtensionResults?.liquid?.signature;
 
     if (credential.clientExtensionResults?.liquid) {
@@ -118,60 +120,92 @@ export class AssertionService {
     }
 
     if (hasLiquidExtension && verified) {
-      this.logger.log('🔐 Verifying Falcon-1024 signature from liquid extension');
-      
-      const falconServiceUrl = this.configService.get('falconServiceUrl') || 'http://localhost:3002';
-      
-      // Use public key from extension if provided, otherwise use stored public key
-      let publicKeyBase64: string;
-      if (credential.clientExtensionResults.liquid.publicKey) {
-        publicKeyBase64 = credential.clientExtensionResults.liquid.publicKey;
-        this.logger.debug('Using Falcon public key from extension');
-      } else {
-        // For Falcon, the stored publicKey should be the full 1793-byte key
-        publicKeyBase64 = userCredential.publicKey;
-        this.logger.debug('Using stored Falcon public key from database');
-      }
-      
-      const publicKeyBytes = fromBase64Url(publicKeyBase64);
-      const signatureBytes = fromBase64Url(credential.clientExtensionResults.liquid.signature);
+      const liquid = credential.clientExtensionResults.liquid;
+      const signatureBytes = fromBase64Url(liquid.signature);
       const challengeBytes = fromBase64Url(challenge);
 
-      const verifyRequest = {
-        publicKey: Array.from(publicKeyBytes),
-        signature: Array.from(signatureBytes),
-        message: Array.from(challengeBytes),
-      };
-
-      this.logger.debug(`Calling Falcon service at: ${falconServiceUrl}/verify`);
+      this.logger.log(
+        `🔐 Verifying ${liquid.type} signature from liquid extension`,
+      );
       this.logger.debug(`Challenge bytes length: ${challengeBytes.length}`);
       this.logger.debug(`Signature bytes length: ${signatureBytes.length}`);
-      this.logger.debug(`Public key bytes length: ${publicKeyBytes.length}`);
 
-      try {
-        const response = await fetch(`${falconServiceUrl}/verify`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(verifyRequest),
-        });
+      if (liquid.type === 'falcon-1024') {
+        const falconServiceUrl =
+          this.configService.get('falconServiceUrl') || 'http://localhost:3002';
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          this.logger.error(`❌ Falcon service returned error ${response.status}: ${errorText}`);
+        // Use public key from extension if provided, otherwise use stored public key
+        let publicKeyBase64: string;
+        if (liquid.publicKey) {
+          publicKeyBase64 = liquid.publicKey;
+          this.logger.debug('Using Falcon public key from extension');
+        } else {
+          // For Falcon, the stored publicKey should be the full 1793-byte key
+          publicKeyBase64 = userCredential.publicKey;
+          this.logger.debug('Using stored Falcon public key from database');
+        }
+
+        const publicKeyBytes = fromBase64Url(publicKeyBase64);
+        const verifyRequest = {
+          publicKey: Array.from(publicKeyBytes),
+          signature: Array.from(signatureBytes),
+          message: Array.from(challengeBytes),
+        };
+
+        this.logger.debug(`Calling Falcon service at: ${falconServiceUrl}/verify`);
+        this.logger.debug(`Public key bytes length: ${publicKeyBytes.length}`);
+
+        try {
+          const response = await fetch(`${falconServiceUrl}/verify`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(verifyRequest),
+          });
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            this.logger.error(
+              `❌ Falcon service returned error ${response.status}: ${errorText}`,
+            );
+            verified = false;
+          } else {
+            const result = await response.json();
+            verified = result.valid;
+
+            if (verified) {
+              this.logger.log('✅ Falcon-1024 signature verified successfully');
+            } else {
+              this.logger.error(
+                `❌ Falcon-1024 signature invalid: ${result.error || 'Unknown error'}`,
+              );
+            }
+          }
+        } catch (error) {
+          this.logger.error('❌ Error calling Falcon verification service:', error);
+          verified = false;
+        }
+      } else if (liquid.type === 'solana') {
+        if (!liquid.publicKey) {
+          this.logger.error('❌ Solana assertion verification requires publicKey');
           verified = false;
         } else {
-          const result = await response.json();
-          verified = result.valid;
-          
+          const publicKeyBytes = fromBase64Url(liquid.publicKey);
+          this.logger.debug(`Public key bytes length: ${publicKeyBytes.length}`);
+
+          verified =
+            publicKeyBytes.length === 32 &&
+            nacl.sign.detached.verify(
+              challengeBytes,
+              signatureBytes,
+              publicKeyBytes,
+            );
+
           if (verified) {
-            this.logger.log('✅ Falcon-1024 signature verified successfully');
+            this.logger.log('✅ Solana signature verified successfully');
           } else {
-            this.logger.error(`❌ Falcon-1024 signature invalid: ${result.error || 'Unknown error'}`);
+            this.logger.error('❌ Solana signature invalid');
           }
         }
-      } catch (error) {
-        this.logger.error('❌ Error calling Falcon verification service:', error);
-        verified = false;
       }
     }
 

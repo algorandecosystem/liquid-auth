@@ -99,15 +99,19 @@ export class AttestationService {
         if (!publicKey) {
           throw new Error('Falcon-1024 signature verification requires publicKey');
         }
-        
+
         // For Falcon, publicKey is already base64-encoded bytes, not an address
         const publicKeyBytes = fromBase64Url(publicKey);
-        
-        const falconServiceUrl = this.configService.get<string>('falconServiceUrl') || 'http://localhost:3002';
-        
+
+        const falconServiceUrl =
+          this.configService.get<string>('falconServiceUrl') ||
+          'http://localhost:3002';
+
         this.logger.debug(`Verifying Falcon signature`);
-        this.logger.debug(`Challenge length: ${challengeBytes.length}, Signature length: ${signatureBytes.length}, PublicKey length: ${publicKeyBytes.length}`);
-        
+        this.logger.debug(
+          `Challenge length: ${challengeBytes.length}, Signature length: ${signatureBytes.length}, PublicKey length: ${publicKeyBytes.length}`,
+        );
+
         const response = await fetch(`${falconServiceUrl}/verify`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -120,15 +124,17 @@ export class AttestationService {
 
         if (!response.ok) {
           const errorText = await response.text();
-          this.logger.error(`Falcon service returned ${response.status}: ${errorText}`);
+          this.logger.error(
+            `Falcon service returned ${response.status}: ${errorText}`,
+          );
           throw new Error(`Falcon service returned ${response.status}`);
         }
 
         const result = await response.json();
         this.logger.debug(`Falcon verification result: ${result.valid}`);
-        
+
         if (result.valid) return true;
-        
+
         // Note: Falcon-1024 uses the publicKey from the extension, so no rekey check needed
         // If the account is rekeyed, the extension would contain the correct public key
         return false;
@@ -136,6 +142,38 @@ export class AttestationService {
         this.logger.error('Falcon-1024 verification error:', error);
         return false;
       }
+    } else if (type === 'solana') {
+      if (!publicKey) {
+        this.logger.error('❌ Solana signature verification requires publicKey');
+        throw new Error('Solana signature verification requires publicKey');
+      }
+
+      const publicKeyBytes = fromBase64Url(publicKey);
+      if (publicKeyBytes.length !== 32) {
+        this.logger.error(
+          `❌ Invalid Solana public key length: ${publicKeyBytes.length}`,
+        );
+        return false;
+      }
+
+      this.logger.debug('Verifying Solana Ed25519 signature');
+      this.logger.debug(`Challenge bytes length: ${challengeBytes.length}`);
+      this.logger.debug(`Signature bytes length: ${signatureBytes.length}`);
+      this.logger.debug(`Public key bytes length: ${publicKeyBytes.length}`);
+
+      const valid = nacl.sign.detached.verify(
+        challengeBytes,
+        signatureBytes,
+        publicKeyBytes,
+      );
+
+      if (valid) {
+        this.logger.log('✅ Solana signature verified successfully');
+      } else {
+        this.logger.error('❌ Solana signature invalid');
+      }
+
+      return valid;
     }
     return false;
   }
@@ -331,9 +369,17 @@ export class AttestationService {
       });
       
       // Validate signature type
-      if (liquid.type !== 'algorand' && liquid.type !== 'falcon-1024') {
-        this.logger.error(`❌ Invalid signature type: '${liquid.type}'. Expected 'algorand' or 'falcon-1024'`);
-        throw new Error(`Invalid signature type: '${liquid.type}'. Must be 'algorand' or 'falcon-1024'`);
+      if (
+        liquid.type !== 'algorand' &&
+        liquid.type !== 'falcon-1024' &&
+        liquid.type !== 'solana'
+      ) {
+        this.logger.error(
+          `❌ Invalid signature type: '${liquid.type}'. Expected 'algorand', 'falcon-1024', or 'solana'`,
+        );
+        throw new Error(
+          `Invalid signature type: '${liquid.type}'. Must be 'algorand', 'falcon-1024', or 'solana'`,
+        );
       }
     }
     

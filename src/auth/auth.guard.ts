@@ -11,7 +11,7 @@ export class AuthGuard implements CanActivate {
     return (
       typeof session !== 'undefined' &&
       typeof session.wallet === 'string' &&
-      session.wallet.length === 58
+      /^[a-zA-Z0-9_-]{32,64}$/.test(session.wallet)
     );
   }
 }
