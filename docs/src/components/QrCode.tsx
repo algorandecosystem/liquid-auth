@@ -114,8 +114,8 @@ export function QrCode({ label = true }: { label?: boolean }) {
   // Account
   const accountInfo = useAccountInfo(_wallet, 3000);
   const isFunded = useMemo(() => {
-    return suggestedParams && accountInfo.data && accountInfo.data.amount > suggestedParams.minFee;
-  }, [accountInfo]);
+    return !!(suggestedParams && accountInfo.data && accountInfo.data.amount > suggestedParams.minFee);
+  }, [accountInfo.data, suggestedParams]);
 
   function handleError(_e: Error){
     console.error('❌ Error in QrCode component:', _e);
@@ -248,7 +248,7 @@ export function QrCode({ label = true }: { label?: boolean }) {
     {isConnected && <div className="absolute flex flex-col bg-gray-800/[.98] p-6 h-80 justify-center max-w-80">
       {isFunded &&
         <SendTransaction disabled={isInFlight} onSubmit={handleSubmit} onCancel={() => setRequestId(SignalClient.generateRequestId())} />}
-      {!isFunded && <FundAccount address={accountInfo.data!!.address} onCancel={() => setRequestId(SignalClient.generateRequestId())} />}
+      {!isFunded && <FundAccount address={accountInfo.data?.address} onCancel={() => setRequestId(SignalClient.generateRequestId())} />}
     </div>}
   </div>;
 }
